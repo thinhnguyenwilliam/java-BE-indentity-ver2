@@ -22,6 +22,11 @@ public class UserService
     UserRepository userRepository;
 
     public User createUser(UserCreationRequest request){
+        if(userRepository.existsByUsername(request.getUsername())){
+            throw new RuntimeException("Username already exists sad man");
+        }
+
+
         User user = new User();
         user.setUsername(request.getUsername());
         user.setPassword(request.getPassword());
@@ -55,7 +60,8 @@ public class UserService
     }
 
 
-    public User getUserById(String id) {
+    public User getUserById(String id)
+    {
         return userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found with ID: " + id));
     }

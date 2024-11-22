@@ -5,6 +5,7 @@ import com.dev.identity_service.dto.request.UserCreationRequest;
 import com.dev.identity_service.dto.request.UserUpdateRequest;
 import com.dev.identity_service.entity.User;
 import com.dev.identity_service.service.UserService;
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -22,7 +23,7 @@ public class UserController
 
 
     @PostMapping
-    public User createUser(@RequestBody UserCreationRequest request)
+    public User createUser(@RequestBody @Valid UserCreationRequest request)
     {
         return userService.createUser(request);
     }
