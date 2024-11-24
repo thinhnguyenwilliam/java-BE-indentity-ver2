@@ -9,10 +9,10 @@ import java.time.LocalDate;
 @Data
 public class UserCreationRequest
 {
-    @Size(min = 2, max = 20, message = "username is short man oh man")
+    @Size(min = 3, max = 20, message = "USERNAME_INVALID") // key of enums
     String username;
 
-    @Size(min = 5, max = 20, message = "password is short man oh man")
+    @Size(min = 5, max = 20, message = "PASSWORD_INVALID")
     String password;
 
     String firstName;

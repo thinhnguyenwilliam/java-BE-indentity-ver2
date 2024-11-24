@@ -4,6 +4,8 @@ package com.dev.identity_service.service;
 import com.dev.identity_service.dto.request.UserCreationRequest;
 import com.dev.identity_service.dto.request.UserUpdateRequest;
 import com.dev.identity_service.entity.User;
+import com.dev.identity_service.enums.ErrorCode;
+import com.dev.identity_service.exception.AppException;
 import com.dev.identity_service.repository.UserRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +25,8 @@ public class UserService
 
     public User createUser(UserCreationRequest request){
         if(userRepository.existsByUsername(request.getUsername())){
-            throw new RuntimeException("Username already exists sad man");
+             throw new AppException(ErrorCode.USER_ALREADY_EXISTS);
+            //throw new RuntimeException("ErrorCode.USER_ALREADY_EXISTS sky");
         }
 
 
