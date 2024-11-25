@@ -4,6 +4,7 @@ package com.dev.identity_service.controller;
 import com.dev.identity_service.dto.request.UserCreationRequest;
 import com.dev.identity_service.dto.request.UserUpdateRequest;
 import com.dev.identity_service.dto.response.ApiResponse;
+import com.dev.identity_service.dto.response.UserResponse;
 import com.dev.identity_service.entity.User;
 import com.dev.identity_service.service.UserService;
 import jakarta.validation.Valid;
@@ -39,13 +40,13 @@ public class UserController
 
 
     @GetMapping("/{id}")
-    public User getUserById(@PathVariable String id) {
+    public UserResponse getUserById(@PathVariable String id) {
         return userService.getUserById(id);
     }
 
 
     @PatchMapping("/{id}")
-    public User updateUser(@PathVariable String id, @RequestBody UserUpdateRequest request){
+    public UserResponse updateUser(@PathVariable String id, @RequestBody UserUpdateRequest request){
         return userService.updateUser(id, request);
     }
 
