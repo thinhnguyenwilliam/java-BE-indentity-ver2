@@ -12,6 +12,7 @@ import com.dev.identity_service.repository.UserRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,16 +26,18 @@ public class UserService
 {
     UserRepository userRepository;
     UserMapper userMapper;
+    PasswordEncoder passwordEncoder;
 
-    public User createUser(UserCreationRequest request)
+    public UserResponse createUser(UserCreationRequest request)
     {
         if(userRepository.existsByUsername(request.getUsername())){
              throw new AppException(ErrorCode.USER_ALREADY_EXISTS);
             //throw new RuntimeException("ErrorCode.USER_ALREADY_EXISTS sky");
         }
-
         User user = userMapper.toUser(request);
-        return userRepository.save(user);
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        User savedUser = userRepository.save(user);
+        return userMapper.toUserResponse(savedUser);
     }
 
     public List<User> getUsers(){
