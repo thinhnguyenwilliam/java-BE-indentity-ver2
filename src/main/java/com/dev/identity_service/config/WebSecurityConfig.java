@@ -14,7 +14,7 @@ public class WebSecurityConfig
 {
     private final String[] PUBLIC_ENDPOINTS = {
             "api/users",
-            "auth/log-in",
+            "auth/*"
     };
 
 
