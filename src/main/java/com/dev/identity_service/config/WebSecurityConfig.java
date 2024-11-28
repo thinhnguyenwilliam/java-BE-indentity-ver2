@@ -1,17 +1,27 @@
 package com.dev.identity_service.config;
 
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
+
+import javax.crypto.spec.SecretKeySpec;
 
 @Configuration
 public class WebSecurityConfig
 {
+    @Value("${jwt.secretKey}")
+    private String SECRET; // This will be injected from application.yml
+
+
     private final String[] PUBLIC_ENDPOINTS = {
             "api/users",
             "auth/*"
@@ -24,6 +34,19 @@ public class WebSecurityConfig
         return new BCryptPasswordEncoder(10);
     }
 
+    @Bean
+    public JwtDecoder jwtDecoder()
+    {
+        // Use the SECRET key to create an HMAC key
+        byte[] secretKeyBytes = SECRET.getBytes();
+        SecretKeySpec secretKeySpec = new SecretKeySpec(secretKeyBytes, "HmacSHA256");//HS256 (HMAC with SHA-256).
+
+        // Configure NimbusJwtDecoder with the symmetric key
+        return NimbusJwtDecoder
+                .withSecretKey(secretKeySpec)
+                .build();
+    }
+
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception
@@ -31,12 +54,20 @@ public class WebSecurityConfig
         http
                 .csrf(AbstractHttpConfigurer::disable)  // Disable CSRF if using JWT or other stateless authentication
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(PUBLIC_ENDPOINTS).permitAll()  // Allow access to public endpoints
+                        //.requestMatchers(PUBLIC_ENDPOINTS).permitAll()  // Allow access to public endpoints
+                        .requestMatchers(HttpMethod.PATCH, "/api/users").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/auth/token","/auth/introspect").permitAll()
                         .anyRequest().authenticated()               // Require authentication for other endpoints
+                )
+                .oauth2ResourceServer(oauth2 ->
+                        oauth2.jwt(jwtConfigurer ->
+                                jwtConfigurer.decoder(jwtDecoder()) // Use the JwtDecoder bean
+                        )
                 );
 
 
         return http.build();
     }
+
 
 }
