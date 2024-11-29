@@ -7,10 +7,13 @@ import com.dev.identity_service.dto.response.ApiResponse;
 import com.dev.identity_service.dto.response.UserResponse;
 import com.dev.identity_service.entity.User;
 import com.dev.identity_service.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,10 +22,27 @@ import java.util.List;
 @RequestMapping("api/users")
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
+@Slf4j
 public class UserController
 {
     UserService userService;
 
+
+    @GetMapping("/get-ip")
+    public String getClientIp(HttpServletRequest request) {
+        String ipAddress = request.getHeader("X-Forwarded-For");
+        if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
+            ipAddress = request.getRemoteAddr();
+        }
+
+        // Convert IPv6 localhost to IPv4 localhost
+        if ("0:0:0:0:0:0:0:1".equals(ipAddress)) {
+            ipAddress = "127.0.0.1";
+        }
+
+        //curl -X GET http://localhost:8081/identity/api/users/get-ip
+        return "Client IP Address: " + ipAddress;
+    }
 
     @PostMapping
     public ApiResponse<UserResponse> createUser(@RequestBody @Valid UserCreationRequest request)
@@ -34,9 +54,25 @@ public class UserController
     }
 
     @GetMapping
-    public List<User> getAllUsers(){
-        return userService.getUsers();
+    public ApiResponse<List<UserResponse>> getAllUsers()
+    {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        log.info("Username: {}", authentication.getName());
+        authentication.getAuthorities().forEach(grantedAuthority ->
+                log.info("GrantedAuthority: {}", grantedAuthority));
+
+        // Call the service to fetch users and map them to responses
+        List<UserResponse> users = userService.getUsers();
+
+        // Return the response
+        return ApiResponse.<List<UserResponse>>builder()
+                .code(1000) // Set the HTTP status code (200 for success)
+                .message("Users retrieved successfully")
+                .result(users)
+                .build();
     }
+
 
 
     @GetMapping("/{id}")

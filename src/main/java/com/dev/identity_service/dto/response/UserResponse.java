@@ -5,6 +5,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
+import java.util.Set;
 
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -21,4 +22,5 @@ public class UserResponse
     String fullName;
     LocalDate dob;
     String getFullName;
+    Set<String> roles;
 }

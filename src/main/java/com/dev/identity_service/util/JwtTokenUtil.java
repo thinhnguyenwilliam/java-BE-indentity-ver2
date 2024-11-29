@@ -1,5 +1,6 @@
 package com.dev.identity_service.util;
 
+import com.dev.identity_service.entity.User;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.*;
 import com.nimbusds.jwt.*;
@@ -10,8 +11,7 @@ import org.springframework.stereotype.Component;
 
 import java.text.ParseException;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.stream.Collectors;
 
 @Component
 public class JwtTokenUtil
@@ -23,8 +23,20 @@ public class JwtTokenUtil
     @Value("${jwt.expiration}")
     private long EXPIRATION_TIME; // This will be injected from application.yml
 
+
+
+    private String buildScope(User user)
+    {
+        // Join the user's roles into a space-separated string
+        return user.getRoles().stream()
+                .map(String::toUpperCase)
+                .collect(Collectors.joining(" "));
+    }
+
+
+
     // Instance method instead of static
-    public String generateToken(String username) {
+    public String generateToken(User user) {
         //properties => claims
         //Map<String, Object> claimsOption = new HashMap<>();
         //claimsOption.put("phoneNumber", "1234");
@@ -34,11 +46,11 @@ public class JwtTokenUtil
         try {
             // Create the JWT claims set
             JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
-                    .subject(username)
+                    .subject(user.getUsername())
                     .issuer("Dev_William") // Optional
                     .issueTime(new Date())
                     .expirationTime(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
-                    .claim("customClaims", "boring")
+                    .claim("roles", buildScope(user))
                     .build();
 
 

@@ -1,6 +1,7 @@
 package com.dev.identity_service.config;
 
 
+import com.dev.identity_service.enums.Role;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,6 +12,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 
 import javax.crypto.spec.SecretKeySpec;
@@ -24,7 +27,7 @@ public class WebSecurityConfig
 
     private final String[] PUBLIC_ENDPOINTS = {
             "api/users",
-            "auth/*"
+            "auth/**"
     };
 
 
@@ -49,19 +52,35 @@ public class WebSecurityConfig
 
 
     @Bean
+    public JwtAuthenticationConverter jwtAuthenticationConverter()
+    {
+        JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
+        grantedAuthoritiesConverter.setAuthorityPrefix("ROLE_"); // Ensure roles have the prefix "ROLE_"
+        grantedAuthoritiesConverter.setAuthoritiesClaimName("roles"); // Map roles from the "roles" claim in the JWT
+
+        JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
+        jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
+        return jwtAuthenticationConverter;
+    }
+
+
+
+    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception
     {
         http
                 .csrf(AbstractHttpConfigurer::disable)  // Disable CSRF if using JWT or other stateless authentication
                 .authorizeHttpRequests(auth -> auth
                         //.requestMatchers(PUBLIC_ENDPOINTS).permitAll()  // Allow access to public endpoints
-                        .requestMatchers(HttpMethod.PATCH, "/api/users").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/users").hasRole(Role.ADMIN.name())
+                        .requestMatchers(HttpMethod.GET, "/api/users/get-ip").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/token","/auth/introspect").permitAll()
                         .anyRequest().authenticated()               // Require authentication for other endpoints
                 )
                 .oauth2ResourceServer(oauth2 ->
                         oauth2.jwt(jwtConfigurer ->
                                 jwtConfigurer.decoder(jwtDecoder()) // Use the JwtDecoder bean
+                                        .jwtAuthenticationConverter(jwtAuthenticationConverter()) // Use custom role converter
                         )
                 );
 

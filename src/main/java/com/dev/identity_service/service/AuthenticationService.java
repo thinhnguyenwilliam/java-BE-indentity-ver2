@@ -42,7 +42,7 @@ public class AuthenticationService
         }
 
         // Generate a JWT token
-        String token = jwtTokenUtil.generateToken(user.getUsername());
+        String token = jwtTokenUtil.generateToken(user);
 
         // Return the token and authentication status wrapped in the AuthenticationResponse DTO
         return AuthenticationResponse.builder()

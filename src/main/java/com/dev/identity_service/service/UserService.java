@@ -6,6 +6,7 @@ import com.dev.identity_service.dto.request.UserUpdateRequest;
 import com.dev.identity_service.dto.response.UserResponse;
 import com.dev.identity_service.entity.User;
 import com.dev.identity_service.enums.ErrorCode;
+import com.dev.identity_service.enums.Role;
 import com.dev.identity_service.exception.AppException;
 import com.dev.identity_service.mapper.UserMapper;
 import com.dev.identity_service.repository.UserRepository;
@@ -16,7 +17,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -36,12 +39,23 @@ public class UserService
         }
         User user = userMapper.toUser(request);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
+
+        Set<String> roles = new HashSet<>();
+        roles.add(Role.USER.name());
+
+        user.setRoles(roles);
+
+
+
         User savedUser = userRepository.save(user);
         return userMapper.toUserResponse(savedUser);
     }
 
-    public List<User> getUsers(){
-        return userRepository.findAll();
+    public List<UserResponse> getUsers()
+    {
+        return userRepository.findAll().stream()
+                .map(userMapper::toUserResponse)
+                .collect(Collectors.toList());
     }
 
     public List<User> deleteUsers(List<String> ids)
