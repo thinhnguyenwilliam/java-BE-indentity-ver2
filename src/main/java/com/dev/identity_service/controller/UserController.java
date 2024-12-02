@@ -64,6 +64,7 @@ public class UserController
 
         // Call the service to fetch users and map them to responses
         List<UserResponse> users = userService.getUsers();
+        log.info("UserResponse List: {}", users); // Debug log
 
         // Return the response
         return ApiResponse.<List<UserResponse>>builder()
@@ -93,5 +94,14 @@ public class UserController
         return userService.deleteUsers(ids);
     }
 
+    @GetMapping("/myInfo")
+    ApiResponse<UserResponse> getMyInfo() {
+        return ApiResponse.<UserResponse>builder()
+                //.code(1000)
+                //.message("Request successful")
+                .result(userService.getMyInfo())
+                .build();
+
+    }
 
 }

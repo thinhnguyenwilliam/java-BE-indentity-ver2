@@ -5,9 +5,11 @@ import com.dev.identity_service.enums.ErrorCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+
 
 import java.util.Objects;
 
@@ -26,7 +28,7 @@ public class GlobalExceptionHandler
 
 
         // Log the exception details
-        logger.error("RuntimeException occurred: ", ex);
+        //logger.error("RuntimeException occurred: ", ex);
         return ResponseEntity.badRequest().body(apiResponse);
     }
 
@@ -36,14 +38,20 @@ public class GlobalExceptionHandler
     {
         ErrorCode errorCode = ex.getErrorCode();
 
-        ApiResponse<Void> apiResponse = new ApiResponse<>();
-        apiResponse.setCode(errorCode.getCode());
-        apiResponse.setMessage(errorCode.getMessage());
+        // Build the ApiResponse object
+        ApiResponse<Void> apiResponse = ApiResponse.<Void>builder()
+                .code(errorCode.getCode())
+                .message(errorCode.getMessage())
+                .build();
 
 
         // Log the exception details
-        logger.error("AppException occurred: ", ex);
-        return ResponseEntity.badRequest().body(apiResponse);
+        logger.error("AppException occurred: Code = {}, Message = {}", errorCode.getCode(), errorCode.getMessage(), ex);
+
+
+        return ResponseEntity
+                .status(errorCode.getStatusCode())
+                .body(apiResponse);
     }
 
 
@@ -70,6 +78,24 @@ public class GlobalExceptionHandler
     }
 
 
+    @ExceptionHandler(value = AccessDeniedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAccessDeniedException(AccessDeniedException ex)
+    {
+        ErrorCode errorCode = ErrorCode.UNAUTHORIZED;
 
+        // Build the ApiResponse object
+        ApiResponse<Void> apiResponse = ApiResponse.<Void>builder()
+                .code(errorCode.getCode())
+                .message(errorCode.getMessage())
+                .build();
+
+        // Log the access denied exception
+        logger.warn("Access denied: {}", ex.getMessage());
+
+        // Return the response with 403 Forbidden status
+        return ResponseEntity
+                .status(errorCode.getStatusCode())
+                .body(apiResponse);
+    }
 
 }

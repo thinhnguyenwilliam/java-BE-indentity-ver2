@@ -28,6 +28,7 @@ public class User
     String id;
 
 
+
     String username;
     String password;
     String firstName;
@@ -41,7 +42,7 @@ public class User
     @LastModifiedDate
     private LocalDateTime updatedAt;
 
-    @ElementCollection(fetch = FetchType.EAGER)
+    @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "role")
     Set<String> roles;

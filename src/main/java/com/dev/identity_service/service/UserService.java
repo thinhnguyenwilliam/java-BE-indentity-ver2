@@ -13,6 +13,11 @@ import com.dev.identity_service.repository.UserRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PostAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +30,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
 @Transactional
+@Slf4j
 public class UserService
 {
     UserRepository userRepository;
@@ -51,8 +57,14 @@ public class UserService
         return userMapper.toUserResponse(savedUser);
     }
 
+
+
+    @PreAuthorize("hasRole('ADMIN')")
     public List<UserResponse> getUsers()
     {
+        log.info("inside getUsers method");
+
+
         return userRepository.findAll().stream()
                 .map(userMapper::toUserResponse)
                 .collect(Collectors.toList());
@@ -76,8 +88,11 @@ public class UserService
     }
 
 
+    @PostAuthorize("returnObject.username == authentication.name or hasRole('ADMIN')")
     public UserResponse getUserById(String id)
     {
+        log.info("inside getUsers method with id: {}", id);
+
         // Fetch the User entity from the repository
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found with ID: " + id));
@@ -109,4 +124,21 @@ public class UserService
 
         return response;
     }
+
+
+    public UserResponse getMyInfo() {
+        var context = SecurityContextHolder.getContext();
+        Authentication authentication = context.getAuthentication();
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new AppException(ErrorCode.UNAUTHORIZED_ACCESS); // Handle unauthenticated users
+        }
+
+        String username = authentication.getName(); // Retrieve the username
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        return userMapper.toUserResponse(user); // Map user entity to response DTO
+    }
+
 }

@@ -2,7 +2,7 @@ package com.dev.identity_service.exception;
 
 import com.dev.identity_service.enums.ErrorCode;
 import lombok.Getter;
-import lombok.Setter;
+
 
 
 @Getter

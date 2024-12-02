@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -19,6 +20,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import javax.crypto.spec.SecretKeySpec;
 
 @Configuration
+@EnableMethodSecurity
 public class WebSecurityConfig
 {
     @Value("${jwt.secretKey}")
@@ -72,7 +74,7 @@ public class WebSecurityConfig
                 .csrf(AbstractHttpConfigurer::disable)  // Disable CSRF if using JWT or other stateless authentication
                 .authorizeHttpRequests(auth -> auth
                         //.requestMatchers(PUBLIC_ENDPOINTS).permitAll()  // Allow access to public endpoints
-                        .requestMatchers(HttpMethod.GET, "/api/users").hasRole(Role.ADMIN.name())
+                        //.requestMatchers(HttpMethod.GET, "/api/users").hasRole(Role.ADMIN.name())
                         .requestMatchers(HttpMethod.GET, "/api/users/get-ip").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/token","/auth/introspect").permitAll()
                         .anyRequest().authenticated()               // Require authentication for other endpoints
@@ -80,8 +82,8 @@ public class WebSecurityConfig
                 .oauth2ResourceServer(oauth2 ->
                         oauth2.jwt(jwtConfigurer ->
                                 jwtConfigurer.decoder(jwtDecoder()) // Use the JwtDecoder bean
-                                        .jwtAuthenticationConverter(jwtAuthenticationConverter()) // Use custom role converter
-                        )
+                                        .jwtAuthenticationConverter(jwtAuthenticationConverter()))
+                                .authenticationEntryPoint(new JwtAuthenticationEntryPoint())
                 );
 
 
