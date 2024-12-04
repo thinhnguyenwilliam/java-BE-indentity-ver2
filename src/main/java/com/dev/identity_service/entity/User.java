@@ -1,6 +1,7 @@
 package com.dev.identity_service.entity;
 
 
+
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -42,8 +43,7 @@ public class User
     @LastModifiedDate
     private LocalDateTime updatedAt;
 
-    @ElementCollection(fetch = FetchType.LAZY)
-    @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
-    @Column(name = "role")
-    Set<String> roles;
+
+    @ManyToMany
+    Set<Role> roles;
 }

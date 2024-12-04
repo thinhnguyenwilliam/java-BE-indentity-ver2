@@ -30,5 +30,5 @@ public class UserResponse
 
 
 
-    Set<String> roles;
+    Set<RoleResponse> roles;
 }

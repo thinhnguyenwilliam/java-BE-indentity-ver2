@@ -29,9 +29,10 @@ public class JwtTokenUtil
     {
         // Join the user's roles into a space-separated string
         return user.getRoles().stream()
-                .map(String::toUpperCase)
-                .collect(Collectors.joining(" "));
+                .map(role -> role.getName().toUpperCase()) // Extract role names and convert to uppercase
+                .collect(Collectors.joining(" ")); // Join with space separator
     }
+
 
 
 
