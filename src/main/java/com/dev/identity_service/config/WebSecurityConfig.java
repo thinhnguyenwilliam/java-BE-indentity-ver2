@@ -57,7 +57,7 @@ public class WebSecurityConfig
     public JwtAuthenticationConverter jwtAuthenticationConverter()
     {
         JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
-        grantedAuthoritiesConverter.setAuthorityPrefix("ROLE_"); // Ensure roles have the prefix "ROLE_"
+        grantedAuthoritiesConverter.setAuthorityPrefix("");
         grantedAuthoritiesConverter.setAuthoritiesClaimName("roles"); // Map roles from the "roles" claim in the JWT
 
         JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();

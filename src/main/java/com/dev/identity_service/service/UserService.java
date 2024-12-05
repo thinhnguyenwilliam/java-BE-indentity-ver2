@@ -9,6 +9,7 @@ import com.dev.identity_service.enums.ErrorCode;
 import com.dev.identity_service.enums.Role;
 import com.dev.identity_service.exception.AppException;
 import com.dev.identity_service.mapper.UserMapper;
+import com.dev.identity_service.repository.RoleRepository;
 import com.dev.identity_service.repository.UserRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +37,8 @@ public class UserService
     UserRepository userRepository;
     UserMapper userMapper;
     PasswordEncoder passwordEncoder;
+    RoleRepository roleRepository;
+
 
     public UserResponse createUser(UserCreationRequest request)
     {
@@ -59,7 +62,8 @@ public class UserService
 
 
 
-    @PreAuthorize("hasRole('ADMIN')")
+    //@PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('CREATE_DATA')")
     public List<UserResponse> getUsers()
     {
         log.info("inside getUsers method");
@@ -112,6 +116,10 @@ public class UserService
 
         // Map update request data to the user entity
         userMapper.updateUser(user, request);
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        var roles = roleRepository.findAllById(request.getRoles());
+        user.setRoles(new HashSet<>(roles));
+
 
         // Save the updated user entity
         user = userRepository.save(user);

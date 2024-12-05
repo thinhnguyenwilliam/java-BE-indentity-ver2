@@ -13,7 +13,6 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 
 import java.io.IOException;
-import java.util.Map;
 
 
 public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint

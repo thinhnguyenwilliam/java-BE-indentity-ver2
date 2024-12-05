@@ -4,7 +4,6 @@ import com.dev.identity_service.entity.User;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.*;
 import com.nimbusds.jwt.*;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -25,13 +24,23 @@ public class JwtTokenUtil
 
 
 
-    private String buildScope(User user)
-    {
-        // Join the user's roles into a space-separated string
-        return user.getRoles().stream()
-                .map(role -> role.getName().toUpperCase()) // Extract role names and convert to uppercase
-                .collect(Collectors.joining(" ")); // Join with space separator
+    private String buildScope(User user) {
+        // Extract roles and permissions, and join them into a single string
+        String roles = user.getRoles().stream()
+                .map(role -> "ROLE_" + role.getName().toUpperCase()) // Prefix with ROLE_
+                .distinct()
+                .collect(Collectors.joining(" "));
+
+        String permissions = user.getRoles().stream()
+                .flatMap(role -> role.getPermissions().stream())
+                .map(permission -> permission.getName().toUpperCase())
+                .distinct()
+                .collect(Collectors.joining(" "));
+
+        // Combine roles and permissions into a single scope string
+        return String.join(" ", roles, permissions);
     }
+
 
 
 
@@ -110,5 +119,11 @@ public class JwtTokenUtil
             System.err.println("Token validation failed: " + e.getMessage());
             return false;
         }
+    }
+
+
+    public String extractScope(String token) throws ParseException {
+        SignedJWT signedJWT = SignedJWT.parse(token);
+        return signedJWT.getJWTClaimsSet().getStringClaim("roles");
     }
 }
