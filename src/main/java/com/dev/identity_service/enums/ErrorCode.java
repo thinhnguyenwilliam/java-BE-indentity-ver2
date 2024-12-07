@@ -27,7 +27,8 @@ public enum ErrorCode
     TOKEN_EXPIRED(3001, "Token has expired", HttpStatus.UNAUTHORIZED),
     ACCESS_DENIED(3002, "Access denied", HttpStatus.FORBIDDEN),
     UNAUTHORIZED(3003, "You don't have permission", HttpStatus.FORBIDDEN),
-    UNAUTHENTICATED(3004, "You don't have permission for unauthenticated", HttpStatus.UNAUTHORIZED)
+    UNAUTHENTICATED(3004, "You don't have permission for unauthenticated", HttpStatus.UNAUTHORIZED),
+    INVALID_DOB(3005, "Wrong DOB", HttpStatus.BAD_REQUEST)
     ;
 
 

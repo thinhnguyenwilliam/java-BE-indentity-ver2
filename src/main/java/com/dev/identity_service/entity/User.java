@@ -34,6 +34,10 @@ public class User
     String password;
     String firstName;
     String lastName;
+
+
+
+
     LocalDate dob;
 
 
