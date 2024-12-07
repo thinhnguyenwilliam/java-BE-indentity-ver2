@@ -2,22 +2,27 @@ package com.dev.identity_service.exception;
 
 import com.dev.identity_service.dto.response.ApiResponse;
 import com.dev.identity_service.enums.ErrorCode;
+import jakarta.validation.ConstraintViolation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
-
-import java.util.Objects;
+import java.util.*;
 
 @ControllerAdvice
 public class GlobalExceptionHandler
 {
 
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+
+
+
 
     @ExceptionHandler(value = Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleException(RuntimeException ex)
@@ -55,27 +60,86 @@ public class GlobalExceptionHandler
     }
 
 
-    @ExceptionHandler(value = MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResponse<Void>> handleValidException(MethodArgumentNotValidException ex)
+    private String mapAttribute(String message, Map<?, ?> attributes)
     {
-        String enumKey= Objects.requireNonNull(ex.getBindingResult().getFieldError()).getDefaultMessage();
-        //ErrorCode errorCode = ErrorCode.valueOf(enumKey);
+        // Iterate over all keys in the attributes map
+        for (Map.Entry<?, ?> entry : attributes.entrySet())
+        {
+            // Only replace placeholders in the message that match the key
+            if (entry.getKey() instanceof String key)
+            {
+                Object value = entry.getValue();
+
+                // Replace {key} with the corresponding value from attributes
+                String placeholder = "{" + key + "}";
+                if (message.contains(placeholder))
+                    message = message.replace(placeholder, value != null ? value.toString() : "");
+            }
+        }
+        return message;
+    }
+
+
+
+    @ExceptionHandler(value = MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiResponse<Void>> handleValidException(MethodArgumentNotValidException ex) {
+        ApiResponse<Void> apiResponse = new ApiResponse<>();
         ErrorCode errorCode = ErrorCode.INVALID_ENUM_KEY;
+
+        // List to collect all attributes
+        List<Map<?, ?>> allAttributes = new ArrayList<>();
+
         try {
-            errorCode = ErrorCode.valueOf(enumKey);
-        }catch (IllegalArgumentException e) {
-            logger.error("IllegalArgumentException occurred: ", e);
+            // Extract the first error message (enumKey)
+            String enumKey = ex.getBindingResult()
+                    .getFieldErrors()
+                    .stream()
+                    .findFirst()
+                    .map(FieldError::getDefaultMessage)
+                    .orElse("INVALID_ENUM_KEY");
+
+            errorCode = ErrorCode.valueOf(enumKey); // Attempt to map the enumKey to an ErrorCode
+
+            // Retrieve details about the violated constraint
+            ex.getBindingResult()
+                    .getFieldErrors()
+                    .stream()
+                    .findFirst()
+                    .ifPresent(fieldError -> {
+                        var constraintDescriptor = fieldError.unwrap(ConstraintViolation.class).getConstraintDescriptor();
+                        Map<?, ?> attributes = constraintDescriptor.getAttributes();
+
+                        // Log the `min` value from the attributes
+                        if (attributes.containsKey("min"))
+                            logger.info("Constraint 'min' value: {}", attributes.get("min"));
+                        else
+                            logger.info("No 'min' attribute found for the constraint.");
+
+                        //Store the attributes for later use
+                        allAttributes.add(attributes);
+                    });
+
+        } catch (IllegalArgumentException e) {
+            logger.error("Invalid enum key: {}", e.getMessage());
+        } catch (Exception e) {
+            logger.error("Unexpected exception occurred: ", e);
         }
 
-        ApiResponse<Void> apiResponse = new ApiResponse<>();
-        apiResponse.setCode(errorCode.getCode());
-        apiResponse.setMessage(errorCode.getMessage());
+        // Now that the loop is finished, log all collected attributes
+        logger.info("Collected constraint attributes: {}", allAttributes);
 
+        // Replace the placeholder {min} in the error message
+        String mappedMessage = mapAttribute(errorCode.getMessage(), allAttributes.getFirst());
+
+        // Set error details in the response
+        apiResponse.setCode(errorCode.getCode());
+        apiResponse.setMessage(mappedMessage);
 
         // Log the exception details
-        logger.error("MethodArgumentNotValidException occurred: ", ex);
+        logger.error("Validation exception: {}", ex.getMessage());
         return ResponseEntity.badRequest().body(apiResponse);
     }
+
 
 
     @ExceptionHandler(value = AccessDeniedException.class)
