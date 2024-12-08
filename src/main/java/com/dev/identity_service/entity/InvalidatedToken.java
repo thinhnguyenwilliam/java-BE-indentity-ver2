@@ -1,18 +1,17 @@
 package com.dev.identity_service.entity;
 
-
-
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.Id;
 import lombok.*;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import lombok.experimental.FieldDefaults;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
 import java.time.LocalDateTime;
+import java.util.Date;
 
-import lombok.experimental.FieldDefaults;
-
-import java.time.LocalDate;
-import java.util.*;
 
 @Entity
 @Getter
@@ -22,23 +21,14 @@ import java.util.*;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @EntityListeners(AuditingEntityListener.class)
-public class User
+public class InvalidatedToken
 {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     String id;
 
 
+    Date expiryTime;
 
-    String username;
-    String password;
-    String firstName;
-    String lastName;
-
-
-
-
-    LocalDate dob;
 
 
     @CreatedDate
@@ -46,8 +36,4 @@ public class User
 
     @LastModifiedDate
     LocalDateTime updatedAt;
-
-
-    @ManyToMany
-    Set<Role> roles;
 }

@@ -2,6 +2,8 @@ package com.dev.identity_service.config;
 
 
 import com.dev.identity_service.enums.Role;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,8 +23,12 @@ import javax.crypto.spec.SecretKeySpec;
 
 @Configuration
 @EnableMethodSecurity
+@RequiredArgsConstructor
 public class WebSecurityConfig
 {
+
+    private CustomJwtDecoder jwtDecoder;
+
     @Value("${jwt.secretKey}")
     private String SECRET; // This will be injected from application.yml
 
@@ -39,18 +45,18 @@ public class WebSecurityConfig
         return new BCryptPasswordEncoder(10);
     }
 
-    @Bean
-    public JwtDecoder jwtDecoder()
-    {
-        // Use the SECRET key to create an HMAC key
-        byte[] secretKeyBytes = SECRET.getBytes();
-        SecretKeySpec secretKeySpec = new SecretKeySpec(secretKeyBytes, "HmacSHA256");//HS256 (HMAC with SHA-256).
-
-        // Configure NimbusJwtDecoder with the symmetric key
-        return NimbusJwtDecoder
-                .withSecretKey(secretKeySpec)
-                .build();
-    }
+//    @Bean
+//    public JwtDecoder jwtDecoder()
+//    {
+//        // Use the SECRET key to create an HMAC key
+//        byte[] secretKeyBytes = SECRET.getBytes();
+//        SecretKeySpec secretKeySpec = new SecretKeySpec(secretKeyBytes, "HmacSHA256");//HS256 (HMAC with SHA-256).
+//
+//        // Configure NimbusJwtDecoder with the symmetric key
+//        return NimbusJwtDecoder
+//                .withSecretKey(secretKeySpec)
+//                .build();
+//    }
 
 
     @Bean
@@ -76,12 +82,12 @@ public class WebSecurityConfig
                         //.requestMatchers(PUBLIC_ENDPOINTS).permitAll()  // Allow access to public endpoints
                         //.requestMatchers(HttpMethod.GET, "/api/users").hasRole(Role.ADMIN.name())
                         .requestMatchers(HttpMethod.GET, "/api/users/get-ip").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/auth/token","/auth/introspect").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/auth/token","/auth/introspect","/auth/logout").permitAll()
                         .anyRequest().authenticated()               // Require authentication for other endpoints
                 )
                 .oauth2ResourceServer(oauth2 ->
                         oauth2.jwt(jwtConfigurer ->
-                                jwtConfigurer.decoder(jwtDecoder()) // Use the JwtDecoder bean
+                                jwtConfigurer.decoder(jwtDecoder) // Use the JwtDecoder bean
                                         .jwtAuthenticationConverter(jwtAuthenticationConverter()))
                                 .authenticationEntryPoint(new JwtAuthenticationEntryPoint())
                 );

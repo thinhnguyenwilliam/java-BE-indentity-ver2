@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 
 import java.text.ParseException;
 import java.util.Date;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Component
@@ -60,6 +61,7 @@ public class JwtTokenUtil
                     .issuer("Dev_William") // Optional
                     .issueTime(new Date())
                     .expirationTime(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
+                    .jwtID(String.valueOf(UUID.randomUUID()))
                     .claim("roles", buildScope(user))
                     .build();
 

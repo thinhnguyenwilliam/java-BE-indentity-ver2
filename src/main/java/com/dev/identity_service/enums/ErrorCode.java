@@ -16,6 +16,7 @@ public enum ErrorCode
     UNCATEGORIZED_EXCEPTION(9999, "Uncategorized exception sad man", HttpStatus.INTERNAL_SERVER_ERROR),
     INVALID_ENUM_KEY(9996, "(Uncategorized exception)--Key of enum data is invalid", HttpStatus.BAD_REQUEST),
 
+
     // User Errors
     USER_ALREADY_EXISTS(2000, "User already exists sad man", HttpStatus.CONFLICT),
     USER_NOT_FOUND(2001, "User not found", HttpStatus.NOT_FOUND),
