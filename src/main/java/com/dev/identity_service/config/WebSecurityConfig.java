@@ -1,9 +1,7 @@
 package com.dev.identity_service.config;
 
 
-import com.dev.identity_service.enums.Role;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,13 +11,9 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
-
-import javax.crypto.spec.SecretKeySpec;
 
 @Configuration
 @EnableMethodSecurity
@@ -82,7 +76,10 @@ public class WebSecurityConfig
                         //.requestMatchers(PUBLIC_ENDPOINTS).permitAll()  // Allow access to public endpoints
                         //.requestMatchers(HttpMethod.GET, "/api/users").hasRole(Role.ADMIN.name())
                         .requestMatchers(HttpMethod.GET, "/api/users/get-ip").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/auth/token","/auth/introspect","/auth/logout").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/auth/token",
+                                "/auth/introspect",
+                                "/auth/logout",
+                                "/auth/refresh").permitAll()
                         .anyRequest().authenticated()               // Require authentication for other endpoints
                 )
                 .oauth2ResourceServer(oauth2 ->

@@ -4,6 +4,7 @@ package com.dev.identity_service.controller;
 import com.dev.identity_service.dto.request.AuthenticationRequest;
 import com.dev.identity_service.dto.request.IntrospectRequest;
 import com.dev.identity_service.dto.request.LogoutRequest;
+import com.dev.identity_service.dto.request.RefreshRequest;
 import com.dev.identity_service.dto.response.ApiResponse;
 import com.dev.identity_service.dto.response.AuthenticationResponse;
 import com.dev.identity_service.dto.response.IntrospectResponse;
@@ -77,6 +78,21 @@ public class AuthenticationController
         // Return success response
         return ApiResponse.<Void>builder()
                 .message("Logout successful")
+                .build();
+    }
+
+
+    @PostMapping("/refresh")
+    ApiResponse<AuthenticationResponse> logIn(@RequestBody RefreshRequest request)
+            throws ParseException, JOSEException
+    {
+        // Call the authenticate method and get the AuthenticationResponse
+        AuthenticationResponse authResponse = authenticationService.refreshToken(request);
+
+        // Build and return the ApiResponse
+        return ApiResponse.<AuthenticationResponse>builder()
+                .code(1000) // Explicitly setting the code
+                .result(authResponse)
                 .build();
     }
 }
