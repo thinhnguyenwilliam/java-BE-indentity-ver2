@@ -9,6 +9,8 @@ import org.springframework.stereotype.Component;
 
 
 import java.text.ParseException;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -18,10 +20,10 @@ public class JwtTokenUtil
 {
 
     @Value("${jwt.secretKey}")
-    private String SECRET; // This will be injected from application.yml
+    protected String SECRET; // This will be injected from application.yml
 
     @Value("${jwt.expiration}")
-    private long EXPIRATION_TIME; // This will be injected from application.yml
+    protected long EXPIRATION_TIME; // This will be injected from application.yml
 
 
 
@@ -60,7 +62,9 @@ public class JwtTokenUtil
                     .subject(user.getUsername())
                     .issuer("Dev_William") // Optional
                     .issueTime(new Date())
-                    .expirationTime(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
+                    .expirationTime(new Date(
+                            Instant.now().plus(EXPIRATION_TIME, ChronoUnit.SECONDS).toEpochMilli()
+                    ))
                     .jwtID(String.valueOf(UUID.randomUUID()))
                     .claim("roles", buildScope(user))
                     .build();

@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.text.ParseException;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 
 @Service
@@ -38,12 +39,13 @@ public class AuthenticationService
 {
     @NonFinal
     @Value("${jwt.secretKey}")
-    String SECRET;
+    protected String SECRET;
+
 
 
     @NonFinal
-    @Value("${jwt.expiration}")
-    long EXPIRATION_TIME;
+    @Value("${jwt.refreshable-duration}")
+    protected long REFRESHABLE_DURATION;
 
 
     Logger logger = LoggerFactory.getLogger(AuthenticationService.class);
@@ -80,7 +82,7 @@ public class AuthenticationService
         String token = request.getToken();
         boolean isValid = true;
         try{
-            verifyToken(token);
+            verifyToken(token,false);
         }catch (AppException | JOSEException | ParseException e){
             isValid = false;
         }
@@ -90,49 +92,60 @@ public class AuthenticationService
                 .build();
     }
 
-    private SignedJWT verifyToken(String token) throws JOSEException, ParseException
-    {
-        // Parse the token
+    private SignedJWT verifyToken(String token, boolean isRefresh) throws JOSEException, ParseException {
+        // Parse and verify the token
         SignedJWT signedJWT = SignedJWT.parse(token);
-
-        // Create the verifier using the secret key
         JWSVerifier verifier = new MACVerifier(SECRET.getBytes());
-        // Verify the token's signature
+
         if (!signedJWT.verify(verifier)) {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
 
-        // Check expiration
-        Date expirationTime = signedJWT.getJWTClaimsSet().getExpirationTime();
+        // Extract claims
+        var claims = signedJWT.getJWTClaimsSet();
+        Date expirationTime = claims.getExpirationTime();
+        if (isRefresh) {
+            Date issueTime = claims.getIssueTime();
+            expirationTime = new Date(issueTime.toInstant().plus(REFRESHABLE_DURATION, ChronoUnit.SECONDS).toEpochMilli());
+        }
+
         if (expirationTime == null || expirationTime.before(new Date())) {
             throw new AppException(ErrorCode.TOKEN_EXPIRED);
         }
 
-        if(invalidatedTokenRepository.existsById(signedJWT.getJWTClaimsSet().getJWTID()))
+        // Check if token is invalidated
+        if (invalidatedTokenRepository.existsById(claims.getJWTID())) {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+
         return signedJWT;
     }
 
-    public void logout(LogoutRequest request) throws JOSEException, ParseException {
-        var signedToken = verifyToken(request.getToken());
 
-        // Extract the JWT ID (jti) for identifying the token
-        String jti = signedToken.getJWTClaimsSet().getJWTID();
-        Date expirationTime = signedToken.getJWTClaimsSet().getExpirationTime();
+    public void logout(LogoutRequest request) throws JOSEException, ParseException
+    {
+        try {
+            var signedToken = verifyToken(request.getToken(),true);
+            // Extract the JWT ID (jti) for identifying the token
+            String jti = signedToken.getJWTClaimsSet().getJWTID();
+            Date expirationTime = signedToken.getJWTClaimsSet().getExpirationTime();
 
 
-        // Save invalidated token to the repository
-        InvalidatedToken invalidatedToken = InvalidatedToken.builder()
-                .id(jti)
-                .expiryTime(expirationTime)
-                .build();
-        invalidatedTokenRepository.save(invalidatedToken);
+            // Save invalidated token to the repository
+            InvalidatedToken invalidatedToken = InvalidatedToken.builder()
+                    .id(jti)
+                    .expiryTime(expirationTime)
+                    .build();
+            invalidatedTokenRepository.save(invalidatedToken);
+        } catch (AppException e) {
+            logger.info("Token is expired cry baby");
+        }
     }
 
     public AuthenticationResponse refreshToken(RefreshRequest request)
             throws ParseException, JOSEException
     {
-        var signedJWT=verifyToken(request.getToken());
+        var signedJWT=verifyToken(request.getToken(),true);
         var jti = signedJWT.getJWTClaimsSet().getJWTID();
         var expirationTime = signedJWT.getJWTClaimsSet().getExpirationTime();
 

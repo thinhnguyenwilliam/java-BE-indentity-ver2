@@ -40,7 +40,8 @@ public class CustomJwtDecoder implements JwtDecoder
         var response = authenticationService.introspect(
                 IntrospectRequest.builder().token(token).build());
 
-        if (!response.isValid()) throw new JwtException("Token invalid");
+        //System.out.println("Introspection response where are you: " + response);
+        if (!response.isValid()) throw new JwtException("Token invalid baby 1");
 
         if (Objects.isNull(nimbusJwtDecoder))
         {
