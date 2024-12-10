@@ -42,6 +42,8 @@ public class UserService
 
     public UserResponse createUser(UserCreationRequest request)
     {
+        log.info("Test Hello Service: Creating user");
+
         if(userRepository.existsByUsername(request.getUsername())){
              throw new AppException(ErrorCode.USER_ALREADY_EXISTS);
             //throw new RuntimeException("ErrorCode.USER_ALREADY_EXISTS sky");

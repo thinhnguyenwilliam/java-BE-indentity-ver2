@@ -79,7 +79,8 @@ public class WebSecurityConfig
                         .requestMatchers(HttpMethod.POST, "/auth/token",
                                 "/auth/introspect",
                                 "/auth/logout",
-                                "/auth/refresh").permitAll()
+                                "/auth/refresh",
+                                "/api/users").permitAll()
                         .anyRequest().authenticated()               // Require authentication for other endpoints
                 )
                 .oauth2ResourceServer(oauth2 ->

@@ -1,6 +1,5 @@
 package com.dev.identity_service.config;
 
-import com.dev.identity_service.entity.Role;
 import com.dev.identity_service.entity.User;
 import com.dev.identity_service.repository.RoleRepository;
 import com.dev.identity_service.repository.UserRepository;
@@ -12,8 +11,6 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
-import java.util.Set;
 
 @Configuration
 @RequiredArgsConstructor
