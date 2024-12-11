@@ -3,7 +3,7 @@ package com.dev.identity_service.controller;
 
 import com.dev.identity_service.dto.request.UserCreationRequest;
 import com.dev.identity_service.dto.response.UserResponse;
-import com.dev.identity_service.service.UserService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,31 +11,44 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.testcontainers.containers.MySQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.LocalDate;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.mockito.ArgumentMatchers.any;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Slf4j
 @SpringBootTest
 @AutoConfigureMockMvc
-@TestPropertySource("/test.properties")
-public class UserControllerTest
+@Testcontainers
+public class UserControllerIntegrationTest
 {
+    @Container
+    private static final MySQLContainer<?> mysqlContainer = new MySQLContainer<>("mysql:8.0");
+
+    @DynamicPropertySource
+    static void configureProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", mysqlContainer::getJdbcUrl);
+        registry.add("spring.datasource.username", mysqlContainer::getUsername);
+        registry.add("spring.datasource.password", mysqlContainer::getPassword);
+    }
+
+
+
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
-    private UserService userService;
+
 
 
     private  UserCreationRequest userCreationRequest;
@@ -73,7 +86,7 @@ public class UserControllerTest
         String jsonRequest = objectMapper.writeValueAsString(userCreationRequest);
 
 
-        when(userService.createUser(any())).thenReturn(userResponse);
+
 
         // When and Then
         mockMvc.perform(post("/api/users")
@@ -82,14 +95,11 @@ public class UserControllerTest
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Creating user successfully yeah man"))
                 .andExpect(jsonPath("$.code").value(1000))
-                .andExpect(jsonPath("$.result.id").value("12cf2543b476765"))
+                //.andExpect(jsonPath("$.result.id").value("12cf2543b476765"))
                 .andExpect(jsonPath("$.result.username").value("JohnHanno"))
                 .andExpect(jsonPath("$.result.firstName").value("John"))
                 .andExpect(jsonPath("$.result.lastName").value("Hanno"))
                 .andExpect(jsonPath("$.result.dob").value("1990-01-01"));
-
-        // Verify that the service method was called once
-        verify(userService, times(1)).createUser(any());
     }
 
     @Test
