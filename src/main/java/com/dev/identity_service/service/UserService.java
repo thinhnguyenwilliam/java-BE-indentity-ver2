@@ -140,9 +140,6 @@ public class UserService
         var context = SecurityContextHolder.getContext();
         Authentication authentication = context.getAuthentication();
 
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new AppException(ErrorCode.UNAUTHORIZED_ACCESS); // Handle unauthenticated users
-        }
 
         String username = authentication.getName(); // Retrieve the username
         User user = userRepository.findByUsername(username)

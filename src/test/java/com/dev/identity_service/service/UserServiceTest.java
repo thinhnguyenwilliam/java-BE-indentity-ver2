@@ -9,11 +9,16 @@ import com.dev.identity_service.entity.User;
 import com.dev.identity_service.enums.ErrorCode;
 import com.dev.identity_service.exception.AppException;
 import com.dev.identity_service.repository.UserRepository;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.TestPropertySource;
 
 import java.time.LocalDate;
@@ -94,4 +99,33 @@ public class UserServiceTest
         assertEquals(ErrorCode.USER_ALREADY_EXISTS, exception.getErrorCode());
 
     }
+
+    @Test
+    @WithMockUser(username = "harry")
+    void getMyInfo_valid_success() {
+        // GIVEN
+        when(userRepository.findByUsername("harry")).thenReturn(java.util.Optional.of(mockUser));
+
+
+        // WHEN
+        UserResponse actualResponse = userService.getMyInfo();
+
+        // THEN
+        assertEquals("JohnHanno", actualResponse.getUsername(), "The username should match.");
+        assertEquals("12cf2543b476765", actualResponse.getId(), "The ID should match.");
+    }
+
+    @Test
+    @WithMockUser(username = "harry")
+    void getMyInfo_userNotFound_throwsException()
+    {
+        // GIVEN
+        when(userRepository.findByUsername("harry")).thenReturn(java.util.Optional.empty());
+
+
+        // WHEN & THEN
+        AppException exception = assertThrows(AppException.class, () -> userService.getMyInfo());
+        assertEquals(ErrorCode.USER_NOT_FOUND, exception.getErrorCode(), "The error code should be USER_NOT_FOUND.");
+    }
+
 }

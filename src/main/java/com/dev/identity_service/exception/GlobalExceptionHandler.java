@@ -19,7 +19,7 @@ public class GlobalExceptionHandler
 {
 
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
-
+    private static final String MIN_ATTRIBUTE = "min";
 
 
 
@@ -62,6 +62,11 @@ public class GlobalExceptionHandler
 
     private String mapAttribute(String message, Map<?, ?> attributes)
     {
+//        String minValue = String.valueOf(attributes.get(MIN_ATTRIBUTE));
+//
+//        return message.replace("{" + MIN_ATTRIBUTE + "}", minValue);
+
+        // code can't test???
         // Iterate over all keys in the attributes map
         for (Map.Entry<?, ?> entry : attributes.entrySet())
         {
