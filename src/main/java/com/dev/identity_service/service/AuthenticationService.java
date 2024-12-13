@@ -1,5 +1,16 @@
 package com.dev.identity_service.service;
 
+import java.text.ParseException;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.dev.identity_service.dto.request.AuthenticationRequest;
 import com.dev.identity_service.dto.request.IntrospectRequest;
 import com.dev.identity_service.dto.request.LogoutRequest;
@@ -16,40 +27,26 @@ import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.SignedJWT;
+
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.text.ParseException;
-import java.time.temporal.ChronoUnit;
-import java.util.Date;
 
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Transactional
-public class AuthenticationService
-{
+public class AuthenticationService {
     @NonFinal
     @Value("${jwt.secretKey}")
     protected String SECRET;
-
-
 
     @NonFinal
     @Value("${jwt.refreshable-duration}")
     protected long REFRESHABLE_DURATION;
 
-
     Logger logger = LoggerFactory.getLogger(AuthenticationService.class);
-
 
     JwtTokenUtil jwtTokenUtil;
     UserRepository userRepository;
@@ -58,7 +55,8 @@ public class AuthenticationService
 
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
         // Find the user by username
-        var user = userRepository.findByUsername(request.getUsername())
+        var user = userRepository
+                .findByUsername(request.getUsername())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
         // Check if the provided password matches the stored password
@@ -71,25 +69,19 @@ public class AuthenticationService
         String token = jwtTokenUtil.generateToken(user);
 
         // Return the token and authentication status wrapped in the AuthenticationResponse DTO
-        return AuthenticationResponse.builder()
-                .authenticated(true)
-                .token(token)
-                .build();
+        return AuthenticationResponse.builder().authenticated(true).token(token).build();
     }
 
-    public IntrospectResponse introspect(IntrospectRequest request)
-    {
+    public IntrospectResponse introspect(IntrospectRequest request) {
         String token = request.getToken();
         boolean isValid = true;
-        try{
-            verifyToken(token,false);
-        }catch (AppException | JOSEException | ParseException e){
+        try {
+            verifyToken(token, false);
+        } catch (AppException | JOSEException | ParseException e) {
             isValid = false;
         }
 
-        return IntrospectResponse.builder()
-                .valid(isValid)
-                .build();
+        return IntrospectResponse.builder().valid(isValid).build();
     }
 
     private SignedJWT verifyToken(String token, boolean isRefresh) throws JOSEException, ParseException {
@@ -106,7 +98,10 @@ public class AuthenticationService
         Date expirationTime = claims.getExpirationTime();
         if (isRefresh) {
             Date issueTime = claims.getIssueTime();
-            expirationTime = new Date(issueTime.toInstant().plus(REFRESHABLE_DURATION, ChronoUnit.SECONDS).toEpochMilli());
+            expirationTime = new Date(issueTime
+                    .toInstant()
+                    .plus(REFRESHABLE_DURATION, ChronoUnit.SECONDS)
+                    .toEpochMilli());
         }
 
         if (expirationTime == null || expirationTime.before(new Date())) {
@@ -121,15 +116,12 @@ public class AuthenticationService
         return signedJWT;
     }
 
-
-    public void logout(LogoutRequest request) throws JOSEException, ParseException
-    {
+    public void logout(LogoutRequest request) throws JOSEException, ParseException {
         try {
-            var signedToken = verifyToken(request.getToken(),true);
+            var signedToken = verifyToken(request.getToken(), true);
             // Extract the JWT ID (jti) for identifying the token
             String jti = signedToken.getJWTClaimsSet().getJWTID();
             Date expirationTime = signedToken.getJWTClaimsSet().getExpirationTime();
-
 
             // Save invalidated token to the repository
             InvalidatedToken invalidatedToken = InvalidatedToken.builder()
@@ -142,30 +134,23 @@ public class AuthenticationService
         }
     }
 
-    public AuthenticationResponse refreshToken(RefreshRequest request)
-            throws ParseException, JOSEException
-    {
-        var signedJWT=verifyToken(request.getToken(),true);
+    public AuthenticationResponse refreshToken(RefreshRequest request) throws ParseException, JOSEException {
+        var signedJWT = verifyToken(request.getToken(), true);
         var jti = signedJWT.getJWTClaimsSet().getJWTID();
         var expirationTime = signedJWT.getJWTClaimsSet().getExpirationTime();
 
         // Save invalidated token to the repository
-        InvalidatedToken invalidatedToken = InvalidatedToken.builder()
-                .id(jti)
-                .expiryTime(expirationTime)
-                .build();
+        InvalidatedToken invalidatedToken =
+                InvalidatedToken.builder().id(jti).expiryTime(expirationTime).build();
         invalidatedTokenRepository.save(invalidatedToken);
 
-        var username=signedJWT.getJWTClaimsSet().getSubject();
-        var user=userRepository.findByUsername(username)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        var username = signedJWT.getJWTClaimsSet().getSubject();
+        var user =
+                userRepository.findByUsername(username).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
         // Generate a JWT token
         String token = jwtTokenUtil.generateToken(user);
 
         // Return the token and authentication status wrapped in the AuthenticationResponse DTO
-        return AuthenticationResponse.builder()
-                .authenticated(true)
-                .token(token)
-                .build();
+        return AuthenticationResponse.builder().authenticated(true).token(token).build();
     }
 }

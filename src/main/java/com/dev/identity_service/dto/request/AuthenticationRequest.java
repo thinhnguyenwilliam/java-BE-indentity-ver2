@@ -1,6 +1,5 @@
 package com.dev.identity_service.dto.request;
 
-
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -9,8 +8,7 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class AuthenticationRequest
-{
+public class AuthenticationRequest {
     String username;
     String password;
 }

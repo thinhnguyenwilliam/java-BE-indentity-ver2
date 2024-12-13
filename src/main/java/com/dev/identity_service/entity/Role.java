@@ -1,14 +1,13 @@
 package com.dev.identity_service.entity;
 
-
-import jakarta.persistence.*;
-import lombok.*;
-import lombok.experimental.FieldDefaults;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
-
 import java.util.Set;
 
+import jakarta.persistence.*;
+
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 
 @Entity
 @Getter
@@ -18,13 +17,11 @@ import java.util.Set;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @EntityListeners(AuditingEntityListener.class)
-public class Role
-{
+public class Role {
     @Id
     String name;
 
     String description;
-
 
     @ManyToMany
     Set<Permission> permissions;

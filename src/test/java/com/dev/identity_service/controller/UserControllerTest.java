@@ -1,11 +1,13 @@
 package com.dev.identity_service.controller;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.dev.identity_service.dto.request.UserCreationRequest;
-import com.dev.identity_service.dto.response.UserResponse;
-import com.dev.identity_service.service.UserService;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import lombok.extern.slf4j.Slf4j;
+import java.time.LocalDate;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,34 +18,30 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.time.LocalDate;
-
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.mockito.ArgumentMatchers.any;
+import com.dev.identity_service.dto.request.UserCreationRequest;
+import com.dev.identity_service.dto.response.UserResponse;
+import com.dev.identity_service.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @SpringBootTest
 @AutoConfigureMockMvc
 @TestPropertySource("/test.properties")
-public class UserControllerTest
-{
+public class UserControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
     @MockBean
     private UserService userService;
 
-
-    private  UserCreationRequest userCreationRequest;
+    private UserCreationRequest userCreationRequest;
     private UserResponse userResponse;
 
     @BeforeEach
-    void setUp()
-    {
+    void setUp() {
         LocalDate dateOfBirth = LocalDate.of(1990, 1, 1);
 
         userCreationRequest = UserCreationRequest.builder()
@@ -63,15 +61,12 @@ public class UserControllerTest
                 .build();
     }
 
-
     @Test
-    void createUser_validRequest_success() throws Exception
-    {
+    void createUser_validRequest_success() throws Exception {
         // Given
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
         String jsonRequest = objectMapper.writeValueAsString(userCreationRequest);
-
 
         when(userService.createUser(any())).thenReturn(userResponse);
 
@@ -117,8 +112,7 @@ public class UserControllerTest
     }
 
     @Test
-    void createUser_invalidPassword_badRequest() throws Exception
-    {
+    void createUser_invalidPassword_badRequest() throws Exception {
         // Given: User request with invalid password format (e.g., too short)
         UserCreationRequest invalidRequest = UserCreationRequest.builder()
                 .username("John Marry ANH")
@@ -138,5 +132,4 @@ public class UserControllerTest
                         .content(jsonRequest))
                 .andExpect(status().isBadRequest());
     }
-
 }

@@ -1,11 +1,12 @@
 package com.dev.identity_service.controller;
 
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.dev.identity_service.dto.request.UserCreationRequest;
-import com.dev.identity_service.dto.response.UserResponse;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import lombok.extern.slf4j.Slf4j;
+import java.time.LocalDate;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,20 +20,18 @@ import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.time.LocalDate;
+import com.dev.identity_service.dto.request.UserCreationRequest;
+import com.dev.identity_service.dto.response.UserResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @SpringBootTest
 @AutoConfigureMockMvc
 @Testcontainers
-public class UserControllerIntegrationTest
-{
+public class UserControllerIntegrationTest {
     @Container
     private static final MySQLContainer<?> mysqlContainer = new MySQLContainer<>("mysql:8.0");
 
@@ -43,20 +42,14 @@ public class UserControllerIntegrationTest
         registry.add("spring.datasource.password", mysqlContainer::getPassword);
     }
 
-
-
     @Autowired
     private MockMvc mockMvc;
 
-
-
-
-    private  UserCreationRequest userCreationRequest;
+    private UserCreationRequest userCreationRequest;
     private UserResponse userResponse;
 
     @BeforeEach
-    void setUp()
-    {
+    void setUp() {
         LocalDate dateOfBirth = LocalDate.of(1990, 1, 1);
 
         userCreationRequest = UserCreationRequest.builder()
@@ -76,17 +69,12 @@ public class UserControllerIntegrationTest
                 .build();
     }
 
-
     @Test
-    void createUser_validRequest_success() throws Exception
-    {
+    void createUser_validRequest_success() throws Exception {
         // Given
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
         String jsonRequest = objectMapper.writeValueAsString(userCreationRequest);
-
-
-
 
         // When and Then
         mockMvc.perform(post("/api/users")
@@ -95,7 +83,7 @@ public class UserControllerIntegrationTest
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Creating user successfully yeah man"))
                 .andExpect(jsonPath("$.code").value(1000))
-                //.andExpect(jsonPath("$.result.id").value("12cf2543b476765"))
+                // .andExpect(jsonPath("$.result.id").value("12cf2543b476765"))
                 .andExpect(jsonPath("$.result.username").value("JohnHanno"))
                 .andExpect(jsonPath("$.result.firstName").value("John"))
                 .andExpect(jsonPath("$.result.lastName").value("Hanno"))
@@ -127,8 +115,7 @@ public class UserControllerIntegrationTest
     }
 
     @Test
-    void createUser_invalidPassword_badRequest() throws Exception
-    {
+    void createUser_invalidPassword_badRequest() throws Exception {
         // Given: User request with invalid password format (e.g., too short)
         UserCreationRequest invalidRequest = UserCreationRequest.builder()
                 .username("John Marry ANH")
@@ -148,5 +135,4 @@ public class UserControllerIntegrationTest
                         .content(jsonRequest))
                 .andExpect(status().isBadRequest());
     }
-
 }

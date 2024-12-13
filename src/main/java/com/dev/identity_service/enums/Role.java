@@ -1,7 +1,6 @@
 package com.dev.identity_service.enums;
 
-public enum Role
-{
+public enum Role {
     ADMIN,
     USER
 }

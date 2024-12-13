@@ -1,13 +1,5 @@
 package com.dev.identity_service.util;
 
-import com.dev.identity_service.entity.User;
-import com.nimbusds.jose.*;
-import com.nimbusds.jose.crypto.*;
-import com.nimbusds.jwt.*;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
-
 import java.text.ParseException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -15,17 +7,22 @@ import java.util.Date;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import com.dev.identity_service.entity.User;
+import com.nimbusds.jose.*;
+import com.nimbusds.jose.crypto.*;
+import com.nimbusds.jwt.*;
+
 @Component
-public class JwtTokenUtil
-{
+public class JwtTokenUtil {
 
     @Value("${jwt.secretKey}")
     protected String SECRET; // This will be injected from application.yml
 
     @Value("${jwt.expiration}")
     protected long EXPIRATION_TIME; // This will be injected from application.yml
-
-
 
     private String buildScope(User user) {
         // Extract roles and permissions, and join them into a single string
@@ -44,17 +41,11 @@ public class JwtTokenUtil
         return String.join(" ", roles, permissions);
     }
 
-
-
-
-
     // Instance method instead of static
     public String generateToken(User user) {
-        //properties => claims
-        //Map<String, Object> claimsOption = new HashMap<>();
-        //claimsOption.put("phoneNumber", "1234");
-
-
+        // properties => claims
+        // Map<String, Object> claimsOption = new HashMap<>();
+        // claimsOption.put("phoneNumber", "1234");
 
         try {
             // Create the JWT claims set
@@ -62,29 +53,27 @@ public class JwtTokenUtil
                     .subject(user.getUsername())
                     .issuer("Dev_William") // Optional
                     .issueTime(new Date())
-                    .expirationTime(new Date(
-                            Instant.now().plus(EXPIRATION_TIME, ChronoUnit.SECONDS).toEpochMilli()
-                    ))
+                    .expirationTime(new Date(Instant.now()
+                            .plus(EXPIRATION_TIME, ChronoUnit.SECONDS)
+                            .toEpochMilli()))
                     .jwtID(String.valueOf(UUID.randomUUID()))
                     .claim("roles", buildScope(user))
                     .build();
 
-
-//            // Start building the JWT claims set
-//            JWTClaimsSet.Builder claimsSetBuilder = new JWTClaimsSet.Builder()
-//                    .subject(username)
-//                    .issuer("Dev_William") // Optional
-//                    .issueTime(new Date())
-//                    .expirationTime(new Date(System.currentTimeMillis() + EXPIRATION_TIME));
-//
-//            // Add each claim from the map to the JWT claims
-//            for (Map.Entry<String, Object> entry : claimsOption.entrySet()) {
-//                claimsSetBuilder.claim(entry.getKey(), entry.getValue());
-//            }
-//
-//            // Build the claims set
-//            JWTClaimsSet claimsSet = claimsSetBuilder.build();
-
+            //            // Start building the JWT claims set
+            //            JWTClaimsSet.Builder claimsSetBuilder = new JWTClaimsSet.Builder()
+            //                    .subject(username)
+            //                    .issuer("Dev_William") // Optional
+            //                    .issueTime(new Date())
+            //                    .expirationTime(new Date(System.currentTimeMillis() + EXPIRATION_TIME));
+            //
+            //            // Add each claim from the map to the JWT claims
+            //            for (Map.Entry<String, Object> entry : claimsOption.entrySet()) {
+            //                claimsSetBuilder.claim(entry.getKey(), entry.getValue());
+            //            }
+            //
+            //            // Build the claims set
+            //            JWTClaimsSet claimsSet = claimsSetBuilder.build();
 
             // Create the JWS header and specify the HMAC algorithm
             JWSHeader header = new JWSHeader(JWSAlgorithm.HS256);
@@ -126,7 +115,6 @@ public class JwtTokenUtil
             return false;
         }
     }
-
 
     public String extractScope(String token) throws ParseException {
         SignedJWT signedJWT = SignedJWT.parse(token);

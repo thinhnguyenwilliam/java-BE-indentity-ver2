@@ -1,32 +1,28 @@
 package com.dev.identity_service.service;
 
-
-import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import java.time.LocalDate;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.TestPropertySource;
+
 import com.dev.identity_service.dto.request.UserCreationRequest;
 import com.dev.identity_service.dto.response.UserResponse;
 import com.dev.identity_service.entity.User;
 import com.dev.identity_service.enums.ErrorCode;
 import com.dev.identity_service.exception.AppException;
 import com.dev.identity_service.repository.UserRepository;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.TestPropertySource;
-
-import java.time.LocalDate;
 
 @SpringBootTest
 @TestPropertySource("/test.properties")
-public class UserServiceTest
-{
+public class UserServiceTest {
     @Autowired
     private UserService userService;
 
@@ -38,8 +34,7 @@ public class UserServiceTest
     private User mockUser;
 
     @BeforeEach
-    void setUp()
-    {
+    void setUp() {
         LocalDate dateOfBirth = LocalDate.of(1990, 1, 1);
 
         userCreationRequest = UserCreationRequest.builder()
@@ -58,7 +53,7 @@ public class UserServiceTest
                 .dob(dateOfBirth)
                 .build();
 
-        mockUser=User.builder()
+        mockUser = User.builder()
                 .id("12cf2543b476765")
                 .username("JohnHanno")
                 .firstName("John")
@@ -68,9 +63,8 @@ public class UserServiceTest
     }
 
     @Test
-    void createUser_validRequest_success()
-    {
-        //GIVEN
+    void createUser_validRequest_success() {
+        // GIVEN
         when(userRepository.existsByUsername(anyString())).thenReturn(false);
         when(userRepository.save(any())).thenReturn(mockUser);
 
@@ -83,9 +77,7 @@ public class UserServiceTest
         assertEquals(userResponse.getFirstName(), actualResponse.getFirstName(), "The first names should match.");
         assertEquals(userResponse.getLastName(), actualResponse.getLastName(), "The last names should match.");
         assertEquals(userResponse.getDob(), actualResponse.getDob(), "The date of birth should match.");
-
     }
-
 
     @Test
     void createUser_usernameAlreadyExists_throwsException() {
@@ -93,11 +85,8 @@ public class UserServiceTest
         when(userRepository.existsByUsername(userCreationRequest.getUsername())).thenReturn(true);
 
         // WHEN & THEN
-        AppException exception = assertThrows(AppException.class, () ->
-                userService.createUser(userCreationRequest)
-        );
+        AppException exception = assertThrows(AppException.class, () -> userService.createUser(userCreationRequest));
         assertEquals(ErrorCode.USER_ALREADY_EXISTS, exception.getErrorCode());
-
     }
 
     @Test
@@ -105,7 +94,6 @@ public class UserServiceTest
     void getMyInfo_valid_success() {
         // GIVEN
         when(userRepository.findByUsername("harry")).thenReturn(java.util.Optional.of(mockUser));
-
 
         // WHEN
         UserResponse actualResponse = userService.getMyInfo();
@@ -117,15 +105,12 @@ public class UserServiceTest
 
     @Test
     @WithMockUser(username = "harry")
-    void getMyInfo_userNotFound_throwsException()
-    {
+    void getMyInfo_userNotFound_throwsException() {
         // GIVEN
         when(userRepository.findByUsername("harry")).thenReturn(java.util.Optional.empty());
-
 
         // WHEN & THEN
         AppException exception = assertThrows(AppException.class, () -> userService.getMyInfo());
         assertEquals(ErrorCode.USER_NOT_FOUND, exception.getErrorCode(), "The error code should be USER_NOT_FOUND.");
     }
-
 }

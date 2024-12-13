@@ -1,6 +1,5 @@
 package com.dev.identity_service.dto.response;
 
-
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -9,8 +8,7 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class AuthenticationResponse
-{
+public class AuthenticationResponse {
     Boolean authenticated;
     String token;
 }

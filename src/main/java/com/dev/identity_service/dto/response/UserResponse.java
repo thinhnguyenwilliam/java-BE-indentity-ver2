@@ -1,12 +1,12 @@
 package com.dev.identity_service.dto.response;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.*;
-import lombok.experimental.FieldDefaults;
-
 import java.time.LocalDate;
 import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -14,8 +14,7 @@ import java.util.Set;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class UserResponse
-{
+public class UserResponse {
     String id;
     String username;
     // Removed password from the response for security reasons
@@ -23,12 +22,8 @@ public class UserResponse
     String lastName;
     String fullName;
 
-
-
-    //@JsonFormat(pattern = "dd-MM-yyy")
+    // @JsonFormat(pattern = "dd-MM-yyy")
     LocalDate dob;
-
-
 
     Set<RoleResponse> roles;
 }
