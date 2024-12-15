@@ -14,6 +14,14 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtGra
 import org.springframework.security.web.SecurityFilterChain;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.cors.CorsConfiguration;
+
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.CorsFilter;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+import java.util.List;
 
 @Configuration
 @EnableMethodSecurity
@@ -44,6 +52,37 @@ public class WebSecurityConfig {
     //                .withSecretKey(secretKeySpec)
     //                .build();
     //    }
+
+
+    @Bean
+    public WebMvcConfigurer corsConfigurer() {
+        return new WebMvcConfigurer() {
+            @Override
+            public void addCorsMappings(CorsRegistry registry) {
+                registry.addMapping("/**")
+                        .allowedOrigins("http://localhost:3000")
+                        .allowedHeaders("Content-Type", "Authorization")
+                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                        .allowCredentials(true);
+            }
+        };
+    }
+
+
+    @Bean
+    public CorsFilter corsFilter() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowCredentials(true);
+        config.setAllowedOrigins(List.of("http://localhost:3000", "https://another-origin.com"));
+        config.setAllowedHeaders(List.of("Content-Type", "Authorization"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/api/**", config);
+
+        return new CorsFilter(source);
+    }
+
 
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
