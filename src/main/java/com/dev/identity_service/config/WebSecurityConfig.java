@@ -15,11 +15,9 @@ import org.springframework.security.web.SecurityFilterChain;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.cors.CorsConfiguration;
-
+import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.util.List;
 
@@ -54,34 +52,9 @@ public class WebSecurityConfig {
     //    }
 
 
-    @Bean
-    public WebMvcConfigurer corsConfigurer() {
-        return new WebMvcConfigurer() {
-            @Override
-            public void addCorsMappings(CorsRegistry registry) {
-                registry.addMapping("/**")
-                        .allowedOrigins("http://localhost:3000")
-                        .allowedHeaders("Content-Type", "Authorization")
-                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                        .allowCredentials(true);
-            }
-        };
-    }
 
 
-    @Bean
-    public CorsFilter corsFilter() {
-        CorsConfiguration config = new CorsConfiguration();
-        config.setAllowCredentials(true);
-        config.setAllowedOrigins(List.of("http://localhost:3000", "https://another-origin.com"));
-        config.setAllowedHeaders(List.of("Content-Type", "Authorization"));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/api/**", config);
-
-        return new CorsFilter(source);
-    }
 
 
     @Bean
@@ -97,29 +70,56 @@ public class WebSecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.csrf(AbstractHttpConfigurer::disable) // Disable CSRF if using JWT or other stateless authentication
-                .authorizeHttpRequests(
-                        auth -> auth
-                                // .requestMatchers(PUBLIC_ENDPOINTS).permitAll()  // Allow access to public endpoints
-                                // .requestMatchers(HttpMethod.GET, "/api/users").hasRole(Role.ADMIN.name())
-                                .requestMatchers(HttpMethod.GET, "/api/users/get-ip")
-                                .permitAll()
-                                .requestMatchers(
-                                        HttpMethod.POST,
-                                        "/auth/token",
-                                        "/auth/introspect",
-                                        "/auth/logout",
-                                        "/auth/refresh",
-                                        "/api/users")
-                                .permitAll()
-                                .anyRequest()
-                                .authenticated() // Require authentication for other endpoints
-                        )
-                .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwtConfigurer -> jwtConfigurer
-                                .decoder(jwtDecoder) // Use the JwtDecoder bean
-                                .jwtAuthenticationConverter(jwtAuthenticationConverter()))
-                        .authenticationEntryPoint(new JwtAuthenticationEntryPoint()));
+        http
+                .csrf(AbstractHttpConfigurer::disable) // Disable CSRF if using JWT or other stateless authentication
+                .authorizeHttpRequests(auth -> auth
+                        // Public endpoints
+                        .requestMatchers(HttpMethod.GET, "/api/users/get-ip").permitAll() // Allow access to this endpoint
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/auth/token",
+                                "/auth/introspect",
+                                "/auth/logout",
+                                "/auth/refresh",
+                                "/api/users") // Allow POST access to these endpoints
+                        .permitAll()
+                        .anyRequest() // All other requests require authentication
+                        .authenticated()
+                )
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwtConfigurer ->
+                        jwtConfigurer.decoder(jwtDecoder) // Use the JwtDecoder bean
+                                .jwtAuthenticationConverter(jwtAuthenticationConverter()) // Set custom JWT authentication converter
+                ).authenticationEntryPoint(new JwtAuthenticationEntryPoint())) // Custom entry point for unauthenticated users
+                .addFilterBefore(corsFilter(), CorsFilter.class); // Explicitly add CORS filter
 
         return http.build();
     }
+
+    @Bean
+    public CorsFilter corsFilter() {
+        CorsConfiguration corsConfig = new CorsConfiguration();
+        corsConfig.addAllowedOrigin("http://localhost:3000"); // Replace with your frontend URL
+        corsConfig.addAllowedMethod("*");
+        corsConfig.addAllowedHeader("*");
+        corsConfig.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", corsConfig);
+
+        return new CorsFilter(source);
+    }
+    //    @Bean
+//    public CorsFilter corsFilter() {
+//        CorsConfiguration config = new CorsConfiguration();
+//        config.setAllowCredentials(true);
+//        config.setAllowedOrigins(List.of("http://localhost:3000", "https://another-origin.com"));
+//        config.setAllowedHeaders(List.of("Content-Type", "Authorization"));
+//        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
+//
+//        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+//        source.registerCorsConfiguration("/api/**", config);
+//
+//        return new CorsFilter(source);
+//    }
+
 }
