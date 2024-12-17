@@ -3,6 +3,9 @@ package com.dev.identity_service.service;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import com.dev.identity_service.constant.PredefinedRole;
+import com.dev.identity_service.entity.Role;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -16,7 +19,6 @@ import com.dev.identity_service.dto.request.UserUpdateRequest;
 import com.dev.identity_service.dto.response.UserResponse;
 import com.dev.identity_service.entity.User;
 import com.dev.identity_service.enums.ErrorCode;
-import com.dev.identity_service.enums.Role;
 import com.dev.identity_service.exception.AppException;
 import com.dev.identity_service.mapper.UserMapper;
 import com.dev.identity_service.repository.RoleRepository;
@@ -38,27 +40,31 @@ public class UserService {
     PasswordEncoder passwordEncoder;
     RoleRepository roleRepository;
 
-    public UserResponse createUser(UserCreationRequest request) {
-        log.info("Test Hello Service: Creating user");
-
-        if (userRepository.existsByUsername(request.getUsername())) {
-            throw new AppException(ErrorCode.USER_ALREADY_EXISTS);
-            // throw new RuntimeException("ErrorCode.USER_ALREADY_EXISTS sky");
-        }
+    public UserResponse createUser(UserCreationRequest request)
+    {
         User user = userMapper.toUser(request);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
 
-        Set<String> roles = new HashSet<>();
-        roles.add(Role.USER.name());
+        Set<Role> roles = new HashSet<>();
+        roleRepository.findById(PredefinedRole.USER_ROLE).ifPresent(roles::add);
+        user.setRoles(roles);
 
-        // user.setRoles(roles);
 
-        User savedUser = userRepository.save(user);
+        // Save the user to the database
+        User savedUser;
+        try {
+            savedUser = userRepository.save(user);
+        } catch (DataIntegrityViolationException e) {
+            // Log the exception and throw a custom application exception
+            throw new AppException(ErrorCode.USER_ALREADY_EXISTS);
+        }
+
+        // Map the saved user to a response DTO and return
         return userMapper.toUserResponse(savedUser);
     }
 
-    // @PreAuthorize("hasRole('ADMIN')")
-    @PreAuthorize("hasAuthority('CREATE_DATA')")
+    @PreAuthorize("hasRole('ADMIN')")
+    //@PreAuthorize("hasAuthority('CREATE_DATA')")
     public List<UserResponse> getUsers() {
         log.info("inside getUsers method");
 
