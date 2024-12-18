@@ -54,13 +54,12 @@ public class UserService {
         User savedUser;
         try {
             savedUser = userRepository.save(user);
+            // Map the saved user to a response DTO and return
+            return userMapper.toUserResponse(savedUser);
         } catch (DataIntegrityViolationException e) {
             // Log the exception and throw a custom application exception
             throw new AppException(ErrorCode.USER_ALREADY_EXISTS);
         }
-
-        // Map the saved user to a response DTO and return
-        return userMapper.toUserResponse(savedUser);
     }
 
     @PreAuthorize("hasRole('ADMIN')")

@@ -1,0 +1,5 @@
+# JWT
+jwt:
+  expiration: 3600 # seconds
+  refreshable-duration: 3600
+

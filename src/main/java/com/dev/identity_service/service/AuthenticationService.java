@@ -54,6 +54,7 @@ public class AuthenticationService {
     InvalidatedTokenRepository invalidatedTokenRepository;
 
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
+        logger.info("SECRET in yam-prod is: {}", SECRET);
         // Find the user by username
         var user = userRepository
                 .findByUsername(request.getUsername())

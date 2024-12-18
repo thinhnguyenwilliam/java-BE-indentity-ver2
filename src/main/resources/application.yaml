@@ -13,8 +13,9 @@ spring:
 
   # Datasource configuration
   datasource:
-    url: jdbc:mysql://localhost:3306/identity_service
-    username: root
+    #url: jdbc:mysql://localhost:3306/identity_service
+    url: ${DBMS_CONNECTION:jdbc:mysql://localhost:3306/identity_service}
+    username: ${DBMS_USERNAME}
     password: root
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
